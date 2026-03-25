@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypo-Helfer</title>
+    <style>
+        body { font-family: -apple-system, system-ui, sans-serif; background: #121212; color: white; padding: 15px; }
+        .container { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 15px; border-left: 5px solid #e74c3c; }
+        .back-link { text-decoration: none; color: #5dade2; display: inline-block; margin-bottom: 15px; font-size: 14px; }
+        h2 { color: #e74c3c; text-align: center; margin-top: 0; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 13px; margin-bottom: 5px; color: #aaa; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; box-sizing: border-box; font-size: 18px; text-align: center; }
+        
+        .result-box { margin-top: 20px; padding: 20px; background: #e74c3c15; border: 1px solid #e74c3c; border-radius: 12px; display: none; text-align: center; }
+        .kh-val { font-size: 32px; font-weight: bold; color: #e74c3c; margin-bottom: 10px; }
+        .item-list { text-align: left; font-size: 14px; color: #ddd; margin-top: 15px; border-top: 1px solid #444; padding-top: 10px; }
+        .item-list li { margin-bottom: 5px; }
+        
+        .info-note { background: #2c2c2c; padding: 12px; border-radius: 8px; margin-top: 20px; font-size: 12px; color: #bbb; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="back-link">← Dashboard</a>
+    <h2>🆘 Hypo-Helfer</h2>
+    
+    <div class="input-group">
+        <label>Aktueller BZ (mg/dl):</label>
+        <input type="number" id="currentBz" placeholder="z.B. 55" oninput="calc()">
+    </div>
+
+    <div class="input-group">
+        <label>Ziel-BZ (mg/dl):</label>
+        <input type="number" id="targetBz" value="100" oninput="calc()">
+    </div>
+
+    <div id="result" class="result-box">
+        <div class="kh-val" id="neededKh">-- g KH</div>
+        <div>benötigt für Zielwert</div>
+        
+        <div class="item-list">
+            <strong>Entspricht ca.:</strong>
+            <ul style="list-style: none; padding: 0; margin-top: 8px;">
+                <li id="tz">-- Plättchen Traubenzucker</li>
+                <li id="juice">-- ml Apfelsaft/Cola</li>
+                <li id="be">-- BE / KE</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="info-note">
+        <strong>Grundlage:</strong> 1g KH hebt den BZ um ca. 5 mg/dl (Durchschnitt Erw.).<br><br>
+        ⚠️ <b>Wichtig:</b> Bei aktivem Insulin (IOB), fallendem Trend oder nach Sport (Muskelauffülleffekt) kann deutlich mehr KH nötig sein!
+    </div>
+</div>
+
+<script>
+function calc() {
+    const current = parseFloat(document.getElementById('currentBz').value);
+    const target = parseFloat(document.getElementById('targetBz').value);
+    const resBox = document.getElementById('result');
+    
+    if (current > 10 && current < target) {
+        resBox.style.display = "block";
+        
+        const diff = target - current;
+        const khGrams = Math.ceil(diff / 5); // 1g hebt um 5mg/dl
+        
+        document.getElementById('neededKh').innerText = khGrams + " g KH";
+        
+        // Umrechnungen
+        // 1 Plättchen TZ (Dextro) ca. 5g KH
+        document.getElementById('tz').innerText = "• " + Math.ceil(khGrams / 5) + " Plättchen Traubenzucker";
+        // Saft/Cola ca. 10g KH pro 100ml
+        document.getElementById('juice').innerText = "• " + (khGrams * 10) + " ml Saft oder Cola";
+        // BE (12g) oder KE (10g)
+        document.getElementById('be').innerText = "• " + (khGrams / 12).toFixed(1) + " BE (oder " + (khGrams / 10).toFixed(1) + " KE)";
+        
+    } else {
+        resBox.style.display = "none";
+    }
+}
+</script>
+
+</body>
+</html>
