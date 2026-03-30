@@ -3,81 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hypo-Helfer</title>
+    <title>Hypo-Helfer Pro</title>
     <style>
         body { font-family: -apple-system, system-ui, sans-serif; background: #121212; color: white; padding: 15px; }
-        .container { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 15px; border-left: 5px solid #e74c3c; }
+        .container { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 15px; border-left: 5px solid #1abc9c; }
         .back-link { text-decoration: none; color: #5dade2; display: inline-block; margin-bottom: 15px; font-size: 14px; }
-        h2 { color: #e74c3c; text-align: center; margin-top: 0; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 13px; margin-bottom: 5px; color: #aaa; }
-        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; box-sizing: border-box; font-size: 18px; text-align: center; }
+        h2 { color: #1abc9c; text-align: center; margin-top: 0; }
         
-        .result-box { margin-top: 20px; padding: 20px; background: #e74c3c15; border: 1px solid #e74c3c; border-radius: 12px; display: none; text-align: center; }
-        .kh-val { font-size: 32px; font-weight: bold; color: #e74c3c; margin-bottom: 10px; }
-        .item-list { text-align: left; font-size: 14px; color: #ddd; margin-top: 15px; border-top: 1px solid #444; padding-top: 10px; }
-        .item-list li { margin-bottom: 8px; }
+        .disclaimer { 
+            background: rgba(243, 156, 18, 0.1); 
+            border: 1px solid #f39c12; 
+            color: #f39c12; 
+            padding: 10px; 
+            border-radius: 8px; 
+            font-size: 10px; 
+            margin-bottom: 15px; 
+            text-align: center;
+        }
+
+        .section-title { font-size: 11px; color: #1abc9c; text-transform: uppercase; margin: 15px 0 8px 0; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 3px;}
+        .input-group { margin-bottom: 10px; }
+        label { display: block; font-size: 12px; margin-bottom: 5px; color: #aaa; }
+        input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; box-sizing: border-box; font-size: 16px; }
         
-        .info-note { background: #2c2c2c; padding: 12px; border-radius: 8px; margin-top: 20px; font-size: 12px; color: #bbb; line-height: 1.4; }
+        .result-card { margin-top: 20px; padding: 15px; background: #1abc9c15; border: 1px solid #1abc9c; border-radius: 12px; text-align: center; }
+        .kh-val { font-size: 32px; font-weight: bold; color: #1abc9c; }
+        .kh-sub { font-size: 14px; color: #aaa; margin-top: 5px; }
+
+        .flex-row { display: flex; gap: 10px; }
+        .flex-row div { flex: 1; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <a href="index.html" class="back-link">← Dashboard</a>
-    <h2>🆘 Hypo-Helfer</h2>
-    
-    <div class="input-group">
-        <label>Aktueller BZ (mg/dl):</label>
-        <input type="number" id="currentBz" placeholder="z.B. 50" oninput="calc()">
+    <h2>🍭 Hypo-Helfer</h2>
+
+    <div class="disclaimer">
+        <strong>HINWEIS:</strong> Nur eine Rechenhilfe. Therapieanpassungen nur nach ärztlicher Absprache!
     </div>
 
-    <div class="input-group">
-        <label>Ziel-BZ (mg/dl):</label>
-        <input type="number" id="targetBz" value="100" oninput="calc()">
-    </div>
-
-    <div id="result" class="result-box">
-        <div class="kh-val" id="neededKh">-- g KH</div>
-        <div>benötigt für Zielwert</div>
-        
-        <div class="item-list">
-            <strong>Entspricht ca.:</strong>
-            <ul style="list-style: none; padding: 0; margin-top: 10px;">
-                <li id="tz">--</li>
-                <li id="juice">--</li>
-                <li id="be">--</li>
-            </ul>
+    <div class="section-title">Aktueller Status</div>
+    <div class="flex-row">
+        <div class="input-group">
+            <label>Ist-BZ (mg/dl):</label>
+            <input type="number" id="currentBZ" placeholder="z.B. 55" oninput="calculateHypo()">
+        </div>
+        <div class="input-group">
+            <label>Ziel-BZ:</label>
+            <input type="number" id="targetBZ" value="100" oninput="calculateHypo()">
         </div>
     </div>
 
-    <div class="info-note">
-        ⚠️ <b>Wichtig:</b> Bei aktivem Insulin (IOB), fallendem Trend oder nach Sport (Muskelauffülleffekt) kann deutlich mehr KH nötig sein!
+    <div class="section-title">Optional: Aktives Insulin (IOB)</div>
+    <div class="input-group">
+        <label>Aktives Insulin (IE):</label>
+        <input type="number" id="iob" step="0.1" placeholder="0.0" oninput="calculateHypo()">
+    </div>
+
+    <div class="section-title">Dein Faktor (für IOB Ausgleich)</div>
+    <div class="input-group">
+        <label>System / Methode:</label>
+        <select id="method" onchange="calculateHypo()">
+            <option value="ke">Pen: KE-Faktor (10g KH)</option>
+            <option value="be">Pen: BE-Faktor (12g KH)</option>
+            <option value="pump">Pumpe: Gramm pro IE (IC)</option>
+        </select>
+    </div>
+    <div class="input-group">
+        <label id="factorLabel">Faktorwert:</label>
+        <input type="number" id="factor" step="0.1" placeholder="z.B. 1.0 oder 10" oninput="calculateHypo()">
+    </div>
+
+    <div id="resBox" class="result-card">
+        <div class="kh-sub">Benötigte Kohlenhydrate:</div>
+        <div id="totalKH" class="kh-val">0 g</div>
+        <div id="breakdown" class="kh-sub" style="font-size: 11px; margin-top: 10px;"></div>
     </div>
 </div>
 
 <script>
-function calc() {
-    const current = parseFloat(document.getElementById('currentBz').value);
-    const target = parseFloat(document.getElementById('targetBz').value);
-    const resBox = document.getElementById('result');
-    
-    if (current > 10 && current < target) {
-        resBox.style.display = "block";
-        
-        const diff = target - current;
-        const khGrams = Math.ceil(diff / 5); 
-        
-        document.getElementById('neededKh').innerText = khGrams + " g KH";
-        
-        // Umrechnungen
-        document.getElementById('tz').innerText = "• " + Math.ceil(khGrams / 5) + " Plättchen Traubenzucker";
-        document.getElementById('juice').innerText = "• " + (khGrams * 10) + " ml Saft oder Cola";
-        document.getElementById('be').innerText = "• " + (khGrams / 12).toFixed(1) + " BE (oder " + (khGrams / 10).toFixed(1) + " KE)";
-        
-    } else {
-        resBox.style.display = "none";
+function calculateHypo() {
+    const currentBZ = parseFloat(document.getElementById('currentBZ').value) || 0;
+    const targetBZ = parseFloat(document.getElementById('targetBZ').value) || 100;
+    const iob = parseFloat(document.getElementById('iob').value) || 0;
+    const method = document.getElementById('method').value;
+    const factor = parseFloat(document.getElementById('factor').value) || 0;
+
+    // 1. Basis-KH für die BZ-Anhebung (Faustformel: 10g KH heben ca. 30-40 mg/dl)
+    // Wir rechnen konservativ mit 1g KH = 3 mg/dl Anhebung
+    let diff = targetBZ - currentBZ;
+    if (diff < 0) diff = 0;
+    let baseKH = diff / 3; 
+
+    // 2. KH für IOB-Ausgleich
+    let extraKH = 0;
+    if (iob > 0 && factor > 0) {
+        if (method === 'ke') {
+            extraKH = iob * (10 / factor);
+        } else if (method === 'be') {
+            extraKH = iob * (12 / factor);
+        } else if (method === 'pump') {
+            extraKH = iob * factor;
+        }
     }
+
+    const total = Math.round(baseKH + extraKH);
+    document.getElementById('totalKH').innerText = total + " g KH";
+
+    // Textliche Aufschlüsselung
+    let info = `Anhebung: ~${Math.round(baseKH)}g`;
+    if (extraKH > 0) info += ` + IOB-Ausgleich: ~${Math.round(extraKH)}g`;
+    document.getElementById('breakdown').innerText = info;
+
+    // Label Anpassung
+    const label = document.getElementById('factorLabel');
+    if (method === 'ke') label.innerText = "Faktor (IE pro 10g):";
+    if (method === 'be') label.innerText = "Faktor (IE pro 12g):";
+    if (method === 'pump') label.innerText = "IC (Gramm pro 1 IE):";
 }
 </script>
 
