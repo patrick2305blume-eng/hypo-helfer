@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hypo-Helfer Pro</title>
+    <title>Hypo-Helfer (Schnell-Modus)</title>
     <style>
         body { font-family: -apple-system, system-ui, sans-serif; background: #121212; color: white; padding: 15px; }
         .container { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 15px; border-left: 5px solid #1abc9c; }
@@ -16,16 +16,17 @@
         }
 
         .section-title { font-size: 11px; color: #1abc9c; text-transform: uppercase; margin: 15px 0 8px 0; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 3px;}
-        .input-group { margin-bottom: 10px; }
+        .input-group { margin-bottom: 12px; }
         label { display: block; font-size: 12px; margin-bottom: 5px; color: #aaa; }
-        input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; box-sizing: border-box; font-size: 16px; }
+        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; box-sizing: border-box; font-size: 18px; }
         
-        .result-card { margin-top: 20px; padding: 15px; background: #1abc9c15; border: 1px solid #1abc9c; border-radius: 12px; text-align: center; }
-        .kh-val { font-size: 32px; font-weight: bold; color: #1abc9c; }
+        .result-card { margin-top: 20px; padding: 20px; background: #1abc9c20; border: 2px solid #1abc9c; border-radius: 12px; text-align: center; }
+        .kh-val { font-size: 40px; font-weight: bold; color: #1abc9c; }
         .kh-sub { font-size: 14px; color: #aaa; margin-top: 5px; }
 
-        .flex-row { display: flex; gap: 10px; }
-        .flex-row div { flex: 1; }
+        .unit-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
+        .unit-toggle button { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #222; color: #888; cursor: pointer; }
+        .unit-toggle button.active { background: #1abc9c; color: white; border-color: #1abc9c; }
     </style>
 </head>
 <body>
@@ -35,92 +36,87 @@
     <h2>🍭 Hypo-Helfer</h2>
 
     <div class="disclaimer">
-        <strong>HINWEIS:</strong> Nur eine Rechenhilfe. Keine ärztliche Empfehlung!
+        Nur Rechenhilfe (Basis: 1g KH = 5 mg/dl / 0,28 mmol). Keine ärztliche Empfehlung!
     </div>
 
-    <div class="section-title">BZ-Status & Sensitivität</div>
-    <div class="flex-row">
-        <div class="input-group">
-            <label>Ist-BZ:</label>
-            <input type="number" id="currentBZ" placeholder="z.B. 55" oninput="calculateHypo()">
+    <div class="unit-toggle">
+        <button id="btnMg" class="active" onclick="setUnit('mg')">mg/dl</button>
+        <button id="btnMmol" onclick="setUnit('mmol')">mmol/l</button>
+    </div>
+
+    <div class="input-group">
+        <label>Aktueller BZ-Wert:</label>
+        <input type="number" id="currentBZ" placeholder="Wert eingeben" oninput="calculate()">
+    </div>
+
+    <div class="input-group">
+        <label>Ziel-Wert:</label>
+        <input type="number" id="targetBZ" value="100" oninput="calculate()">
+    </div>
+
+    <div class="section-title">Aktives Insulin (optional)</div>
+    <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+            <label>Aktives IE:</label>
+            <input type="number" id="iob" step="0.1" placeholder="0.0" oninput="calculate()">
         </div>
-        <div class="input-group">
-            <label>Ziel-BZ:</label>
-            <input type="number" id="targetBZ" value="110" oninput="calculateHypo()">
+        <div style="flex: 1.5;">
+            <label>Mein Faktor:</label>
+            <input type="number" id="factor" step="0.1" placeholder="z.B. 1.0" oninput="calculate()">
         </div>
     </div>
-    <div class="input-group">
-        <label>Anhebung durch 1g KH (mg/dl):</label>
-        <input type="number" id="risePerGram" value="5" oninput="calculateHypo()">
-    </div>
-
-    <div class="section-title">Optional: Aktives Insulin (IOB)</div>
-    <div class="input-group">
-        <label>Aktives Insulin (IE):</label>
-        <input type="number" id="iob" step="0.1" placeholder="0.0" oninput="calculateHypo()">
-    </div>
-
-    <div class="section-title">Dein Faktor</div>
-    <div class="input-group">
-        <select id="method" onchange="calculateHypo()">
-            <option value="ke">Pen: IE pro KE (10g KH)</option>
-            <option value="be">Pen: IE pro BE (12g KH)</option>
-            <option value="pump">Pumpe: g KH pro 1 IE (IC)</option>
-        </select>
-    </div>
-    <div class="input-group">
-        <label id="factorLabel">Faktorwert:</label>
-        <input type="number" id="factor" step="0.1" placeholder="z.B. 1.0" oninput="calculateHypo()">
-    </div>
+    <select id="method" onchange="calculate()" style="margin-top: 8px; font-size: 12px; padding: 5px;">
+        <option value="ke">Faktor pro KE (10g)</option>
+        <option value="be">Faktor pro BE (12g)</option>
+        <option value="pump">Pumpe (g pro 1 IE)</option>
+    </select>
 
     <div id="resBox" class="result-card">
-        <div class="kh-sub">Benötigte Kohlenhydrate gesamt:</div>
-        <div id="totalKH" class="kh-val">0 g</div>
+        <div class="kh-sub">Du musst jetzt essen:</div>
+        <div id="totalKH" class="kh-val">0 g KH</div>
         <div id="breakdown" class="kh-sub" style="font-size: 11px; margin-top: 10px;"></div>
     </div>
 </div>
 
 <script>
-function calculateHypo() {
-    const currentBZ = parseFloat(document.getElementById('currentBZ').value) || 0;
-    const targetBZ = parseFloat(document.getElementById('targetBZ').value) || 0;
-    const risePerGram = parseFloat(document.getElementById('risePerGram').value) || 5;
+let unit = 'mg';
+
+function setUnit(u) {
+    unit = u;
+    document.getElementById('btnMg').className = (u === 'mg' ? 'active' : '');
+    document.getElementById('btnMmol').className = (u === 'mmol' ? 'active' : '');
+    document.getElementById('targetBZ').value = (u === 'mg' ? 100 : 5.6);
+    calculate();
+}
+
+function calculate() {
+    const current = parseFloat(document.getElementById('currentBZ').value) || 0;
+    const target = parseFloat(document.getElementById('targetBZ').value) || 0;
     const iob = parseFloat(document.getElementById('iob').value) || 0;
-    const method = document.getElementById('method').value;
     const factor = parseFloat(document.getElementById('factor').value) || 0;
+    const method = document.getElementById('method').value;
 
-    // 1. Berechnung Basis-Anhebung
-    let diff = targetBZ - currentBZ;
-    if (diff < 0) diff = 0;
-    let baseKH = diff / risePerGram; 
+    if (current === 0) return;
 
-    // 2. Berechnung IOB-Ausgleich
+    // 1. Basis-KH (Festwert: 1g KH = 5 mg/dl oder 0.28 mmol)
+    const risePerGram = (unit === 'mg' ? 5 : 0.28);
+    let diff = target - current;
+    let baseKH = diff > 0 ? diff / risePerGram : 0;
+
+    // 2. IOB-Ausgleich
     let extraKH = 0;
     if (iob > 0 && factor > 0) {
-        if (method === 'ke') {
-            // IE * (10 / IE_pro_10g) = Gramm
-            extraKH = iob * (10 / factor);
-        } else if (method === 'be') {
-            extraKH = iob * (12 / factor);
-        } else if (method === 'pump') {
-            // IE * Gramm_pro_IE = Gramm
-            extraKH = iob * factor;
-        }
+        if (method === 'ke') extraKH = iob * (10 / factor);
+        else if (method === 'be') extraKH = iob * (12 / factor);
+        else if (method === 'pump') extraKH = iob * factor;
     }
 
-    const total = Math.round(baseKH + extraKH);
+    const total = Math.ceil(baseKH + extraKH); // Aufrunden für Sicherheit bei Hypo
     document.getElementById('totalKH').innerText = total + " g KH";
-
-    let info = `Anhebung (${Math.round(diff)} mg/dl): ~${baseKH.toFixed(1)}g`;
-    if (extraKH > 0) info += ` + IOB-Ersatz: ~${extraKH.toFixed(1)}g`;
-    document.getElementById('breakdown').innerText = info;
-
-    const label = document.getElementById('factorLabel');
-    if (method === 'ke') label.innerText = "Faktor (IE pro 10g):";
-    if (method === 'be') label.innerText = "Faktor (IE pro 12g):";
-    if (method === 'pump') label.innerText = "Verhältnis (g pro 1 IE):";
+    
+    document.getElementById('breakdown').innerText = 
+        `Basis: ${baseKH.toFixed(1)}g + IOB: ${extraKH.toFixed(1)}g`;
 }
 </script>
-
 </body>
 </html>
